@@ -155,7 +155,8 @@ export function Home() {
       await recordExit(activeTripForPlate.id)
     } else {
       const ton = plateToTonnage.get(p) ?? (tonnage ? Number(tonnage) : 0)
-      await recordEntry(p, ton, groupName || null)
+      const group = (plateToGroup.get(p) || groupName || '').trim() || null
+      await recordEntry(p, ton, group)
     }
     setPlate('')
   }
