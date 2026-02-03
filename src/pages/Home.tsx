@@ -32,9 +32,13 @@ export function Home() {
   const recentPlates = [...new Set(tripsThisShift.map((t) => t.plateNumber))].slice(0, 12)
   const plateToTonnage = new Map(tripsThisShift.map((t) => [t.plateNumber, t.tonnage]))
   const allPlatesWithTonnage = new Map<string, number>()
+  const allPlatesWithGroup = new Map<string, string>()
   for (const t of [...trips].reverse()) {
     if (!allPlatesWithTonnage.has(t.plateNumber)) {
       allPlatesWithTonnage.set(t.plateNumber, t.tonnage)
+    }
+    if (!allPlatesWithGroup.has(t.plateNumber)) {
+      allPlatesWithGroup.set(t.plateNumber, t.groupName ?? '')
     }
   }
   const plateToTripCount = new Map<string, number>()
@@ -127,10 +131,12 @@ export function Home() {
   }, [])
 
   const activeTrips = trips.filter((t) => !t.exitTime)
+  const platesOnTerritory = new Set(activeTrips.map((t) => t.plateNumber))
 
   const applySuggestion = (p: string) => {
     setPlate(p)
     setTonnage(String(allPlatesWithTonnage.get(p) ?? ''))
+    setGroupName(allPlatesWithGroup.get(p) ?? '')
     setShowSuggestions(false)
     inputRef.current?.focus()
   }
@@ -465,7 +471,7 @@ export function Home() {
                       key={p}
                       role="button"
                       tabIndex={0}
-                      className="vehicle-card"
+                      className={`vehicle-card ${platesOnTerritory.has(p) ? 'vehicle-card-on-territory' : ''}`}
                       onClick={() => handleQuickEntry(p)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') handleQuickEntry(p)

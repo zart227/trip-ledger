@@ -398,9 +398,37 @@
   touch-action: manipulation;
 }
 
+.vehicle-card-on-territory {
+  border-color: rgba(34, 197, 94, 0.6);
+  background: rgba(34, 197, 94, 0.08);
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.2);
+}
+
+.vehicle-card-on-territory::before {
+  content: '';
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 .vehicle-card:hover {
   border-color: #38bdf8;
   background: rgba(56, 189, 248, 0.1);
+}
+
+.vehicle-card-on-territory:hover {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.15);
 }
 
 .vehicle-card:active {
