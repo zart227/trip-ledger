@@ -480,6 +480,9 @@ export function Home() {
                       <span className="plate">{p}</span>
                       <span className="tonnage">{plateToTonnage.get(p) ?? 0} т</span>
                       <span className="trip-count">{plateToTripCount.get(p) ?? 0} рейсов</span>
+                      {platesOnTerritory.has(p) && (
+                        <span className="vehicle-card-territory-badge">На территории</span>
+                      )}
                       <button
                         type="button"
                         className="vehicle-card-edit-btn"
