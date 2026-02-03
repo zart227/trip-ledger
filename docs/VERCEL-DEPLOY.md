@@ -21,11 +21,10 @@ git push -u origin main
 2. Войдите через **GitHub**
 3. Нажмите **Add New** → **Project**
 4. Выберите репозиторий `trip-ledger`
-5. **Важно:** в разделе **Root Directory** укажите `trip-ledger` (папка с package.json)
-6. В **Environment Variables** добавьте:
+5. В **Environment Variables** добавьте:
    - `VITE_SUPABASE_URL` — URL вашего Supabase проекта
    - `VITE_SUPABASE_ANON_KEY` — anon key из Supabase
-7. Нажмите **Deploy**
+6. Нажмите **Deploy**
 
 ## Шаг 3: Готово
 

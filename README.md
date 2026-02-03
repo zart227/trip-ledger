@@ -39,7 +39,7 @@ npm run build
 
 1. Загрузите проект на [GitHub](https://github.com/new)
 2. На [vercel.com](https://vercel.com) войдите через GitHub → **Add New** → **Project**
-3. Выберите репозиторий, в **Root Directory** укажите `trip-ledger`
+3. Выберите репозиторий
 4. Добавьте переменные: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 5. **Deploy** — получите ссылку вида `trip-ledger-xxx.vercel.app`
 
