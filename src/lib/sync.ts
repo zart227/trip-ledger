@@ -86,15 +86,14 @@ export async function syncWithSupabase(trips: Trip[]): Promise<{ ok: boolean; er
   }
 
   const remote = pull.trips ?? []
-  const localIds = new Set(trips.map((t) => t.id))
 
-  // If local is empty, treat as "new device" — pull only, never delete remote
+  // If local is empty, treat as "new device" — pull only, never touch remote
   if (trips.length === 0 && remote.length > 0) {
     for (const t of remote) await db.saveTrip(t)
     return { ok: true }
   }
-  const getCreated = (t: Trip) => t.createdAt
 
+  const getCreated = (t: Trip) => t.createdAt
   const mergeTrips = (local: Trip[], rem: Trip[]): Trip[] => {
     const map = new Map<string, Trip>()
     for (const t of [...local, ...rem]) {
@@ -111,18 +110,9 @@ export async function syncWithSupabase(trips: Trip[]): Promise<{ ok: boolean; er
   }
 
   const merged = mergeTrips(trips, remote)
-  const toDeleteIds = remote.filter((r) => !localIds.has(r.id)).map((r) => r.id)
-  if (toDeleteIds.length > 0) {
-    const delResult = await deleteFromSupabase(toDeleteIds)
-    if (!delResult.ok) return delResult
-  }
-
-  const mergedFiltered = merged.filter((t) => !toDeleteIds.includes(t.id))
-  const pushResult = await pushToSupabase(mergedFiltered)
+  const pushResult = await pushToSupabase(merged)
   if (!pushResult.ok) return pushResult
 
-  for (const t of mergedFiltered) await db.saveTrip(t)
-  for (const id of toDeleteIds) await db.deleteTrip(id)
-
+  for (const t of merged) await db.saveTrip(t)
   return { ok: true }
 }

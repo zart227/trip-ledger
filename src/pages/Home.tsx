@@ -353,7 +353,10 @@ export function Home() {
                     key={p}
                     type="button"
                     className={`suggestion-item ${i === highlightedIdx ? 'highlighted' : ''}`}
-                    onClick={() => applySuggestion(p)}
+                    onPointerDown={(e) => {
+                      e.preventDefault()
+                      applySuggestion(p)
+                    }}
                   >
                     <span className="plate">{p}</span>
                     <span className="muted">{allPlatesWithTonnage.get(p) ?? 0} т</span>
@@ -399,7 +402,10 @@ export function Home() {
                     key={g}
                     type="button"
                     className={`suggestion-item ${i === highlightedGroupIdx ? 'highlighted' : ''}`}
-                    onClick={() => applyGroupSuggestion(g)}
+                    onPointerDown={(e) => {
+                      e.preventDefault()
+                      applyGroupSuggestion(g)
+                    }}
                   >
                     {g}
                   </button>
@@ -467,7 +473,10 @@ export function Home() {
                                 key={g}
                                 type="button"
                                 className={`suggestion-item ${i === highlightedEditGroupIdx ? 'highlighted' : ''}`}
-                                onClick={() => applyEditGroupSuggestion(g)}
+                                onPointerDown={(e) => {
+                                  e.preventDefault()
+                                  applyEditGroupSuggestion(g)
+                                }}
                               >
                                 {g}
                               </button>
