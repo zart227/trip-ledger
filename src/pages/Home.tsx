@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useData } from '../hooks/useData'
 import { getShiftBounds, getCurrentShiftDate } from '../lib/export'
+import { pluralize } from '../lib/plural'
 import type { Trip } from '../types'
 
 export function Home() {
@@ -336,7 +337,12 @@ export function Home() {
                   className="vehicle-on-territory-card"
                   onClick={() => recordExit(t.id)}
                 >
-                  <span className="plate">{t.plateNumber}</span>
+                  <div className="vehicle-on-territory-header">
+                    <span className="plate">{t.plateNumber}</span>
+                    <span className="vehicle-on-territory-trip-count">
+                      {`${plateToTripCount.get(t.plateNumber) ?? 0} ${pluralize(plateToTripCount.get(t.plateNumber) ?? 0, ['рейс', 'рейса', 'рейсов'])}`}
+                    </span>
+                  </div>
                   <span className="muted">{t.tonnage} т</span>
                   <span className="vehicle-on-territory-group">
                     {t.groupName ? <span className="badge">{t.groupName}</span> : null}
@@ -541,7 +547,9 @@ export function Home() {
                     >
                       <span className="plate">{p}</span>
                       <span className="tonnage">{plateToTonnage.get(p) ?? 0} т</span>
-                      <span className="trip-count">{plateToTripCount.get(p) ?? 0} рейсов</span>
+                      <span className="trip-count">
+                        {`${plateToTripCount.get(p) ?? 0} ${pluralize(plateToTripCount.get(p) ?? 0, ['рейс', 'рейса', 'рейсов'])}`}
+                      </span>
                       {platesOnTerritory.has(p) && (
                         <span className="vehicle-card-territory-badge">На территории</span>
                       )}

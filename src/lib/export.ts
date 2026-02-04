@@ -1,4 +1,5 @@
 import type { Trip, ExportData } from '../types'
+import { pluralize } from './plural'
 
 const SHIFT_START_HOUR = 7
 
@@ -87,7 +88,7 @@ export function formatShiftReport(trips: Trip[], shiftDate: Date): string {
       a[0].localeCompare(b[0])
     )
     for (const [plate, { count, tonnage }] of sortedPlates) {
-      lines.push(`  • ${plate} (${tonnage} т): ${count} рейсов`)
+      lines.push(`  • ${plate} (${tonnage} т): ${count} ${pluralize(count, ['рейс', 'рейса', 'рейсов'])}`)
     }
   }
 
