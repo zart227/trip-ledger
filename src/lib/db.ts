@@ -21,9 +21,17 @@ export async function getDB() {
   })
 }
 
+function normalizeTrip(raw: unknown): Trip {
+  const t = raw as Trip & { paymentMethod?: string; amount?: number }
+  const cashAmount = t.cashAmount ?? (t.paymentMethod === 'cash' && typeof t.amount === 'number' ? t.amount : undefined)
+  const { paymentMethod, amount, ...rest } = t
+  return { ...rest, cashAmount } as Trip
+}
+
 export async function getAllTrips(): Promise<Trip[]> {
   const db = await getDB()
-  return (await db.getAll('trips')) as Trip[]
+  const rows = await db.getAll('trips')
+  return (rows as unknown[]).map(normalizeTrip)
 }
 
 export async function saveTrip(trip: Trip): Promise<void> {

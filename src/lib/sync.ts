@@ -11,6 +11,8 @@ function toDbTrip(t: Trip) {
     entry_time: t.entryTime,
     exit_time: t.exitTime,
     created_at: t.createdAt,
+    payment_method: t.cashAmount != null ? 'cash' : null,
+    amount: t.cashAmount ?? null,
   }
 }
 
@@ -22,6 +24,8 @@ function fromDbTrip(r: {
   entry_time: string
   exit_time: string | null
   created_at: string
+  payment_method?: string | null
+  amount?: number | null
 }): Trip {
   return {
     id: r.id,
@@ -31,6 +35,7 @@ function fromDbTrip(r: {
     entryTime: r.entry_time,
     exitTime: r.exit_time,
     createdAt: r.created_at,
+    cashAmount: typeof r.amount === 'number' && r.payment_method === 'cash' ? r.amount : undefined,
   }
 }
 

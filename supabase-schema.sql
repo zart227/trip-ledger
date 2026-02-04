@@ -2,7 +2,7 @@
 -- Run this in Supabase SQL Editor
 -- If you had the old schema (vehicles, groups), run: DROP TABLE IF EXISTS trips, vehicles, groups CASCADE;
 
--- Trips: каждый рейс хранит госномер и тонаж
+-- Trips: каждый рейс хранит госномер, тонаж и оплату
 CREATE TABLE IF NOT EXISTS trips (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   plate_number TEXT NOT NULL,
@@ -10,8 +10,14 @@ CREATE TABLE IF NOT EXISTS trips (
   group_name TEXT,
   entry_time TIMESTAMPTZ NOT NULL,
   exit_time TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now()
+  created_at TIMESTAMPTZ DEFAULT now(),
+  payment_method TEXT,
+  amount NUMERIC
 );
+
+-- Migration: add payment columns if table already exists (run in Supabase SQL Editor if needed)
+-- ALTER TABLE trips ADD COLUMN IF NOT EXISTS payment_method TEXT;
+-- ALTER TABLE trips ADD COLUMN IF NOT EXISTS amount NUMERIC;
 
 -- Indexes for queries
 CREATE INDEX IF NOT EXISTS idx_trips_entry_time ON trips(entry_time);

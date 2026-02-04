@@ -80,6 +80,20 @@ export function formatShiftReport(trips: Trip[], shiftDate: Date): string {
     return a.localeCompare(b)
   })
 
+  const getPlatePaymentStats = (plateNum: string) => {
+    const allPlateTrips = tripsForShift.filter((t) => t.plateNumber === plateNum)
+    const completed = allPlateTrips.filter((t) => t.exitTime)
+    const active = allPlateTrips.filter((t) => !t.exitTime)
+    const paid = completed.filter((t) => t.cashAmount != null)
+    return {
+      total: completed.length,
+      paid: paid.length,
+      unpaid: completed.length - paid.length,
+      active: active.length,
+      cashSum: paid.reduce((s, t) => s + (t.cashAmount ?? 0), 0),
+    }
+  }
+
   for (const group of sortedGroups) {
     lines.push('')
     lines.push(`${group}:`)
@@ -88,12 +102,33 @@ export function formatShiftReport(trips: Trip[], shiftDate: Date): string {
       a[0].localeCompare(b[0])
     )
     for (const [plate, { count, tonnage }] of sortedPlates) {
-      lines.push(`  • ${plate} (${tonnage} т): ${count} ${pluralize(count, ['рейс', 'рейса', 'рейсов'])}`)
+      const stats = getPlatePaymentStats(plate)
+      let line = `  • ${plate} (${tonnage} т): ${count} ${pluralize(count, ['рейс', 'рейса', 'рейсов'])}`
+      if (stats.paid > 0) {
+        if (stats.paid === stats.total && stats.active === 0) {
+          line += ` — оплачено полностью (${stats.cashSum.toLocaleString('ru-RU')} ₽)`
+        } else {
+          const parts: string[] = []
+          parts.push(`оплачено ${stats.paid}/${stats.total} (${stats.cashSum.toLocaleString('ru-RU')} ₽)`)
+          if (stats.unpaid > 0) parts.push(`осталось ${stats.unpaid}`)
+          if (stats.active > 0) parts.push(`${stats.active} в пути`)
+          line += ` — ${parts.join(', ')}`
+        }
+      }
+      lines.push(line)
     }
   }
 
   lines.push('')
   lines.push(`Всего рейсов за смену: ${tripsForShift.length}`)
+
+  const cashTrips = tripsForShift.filter((t) => t.cashAmount != null)
+  const cashSum = cashTrips.reduce((s, t) => s + (t.cashAmount ?? 0), 0)
+
+  if (cashTrips.length > 0) {
+    lines.push('')
+    lines.push(`Наличные: ${cashSum.toLocaleString('ru-RU')} ₽ за ${cashTrips.length} ${pluralize(cashTrips.length, ['рейс', 'рейса', 'рейсов'])}`)
+  }
 
   return lines.join('\n')
 }

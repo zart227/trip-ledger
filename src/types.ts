@@ -6,6 +6,8 @@ export interface Trip {
   entryTime: string
   exitTime: string | null
   createdAt: string
+  /** Оплата налом: сумма в рублях */
+  cashAmount?: number
 }
 
 export interface ExportData {

@@ -563,24 +563,78 @@
   font-weight: 500;
 }
 
-.vehicle-card-edit-btn {
+.vehicle-card-payment-status {
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.vehicle-card-payment-full {
+  color: #86efac;
+}
+
+.vehicle-card-payment-partial {
+  color: #fcd34d;
+}
+
+.vehicle-card-actions {
+  display: flex;
+  gap: 0.5rem;
   margin-top: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.vehicle-card-edit-btn,
+.vehicle-card-payment-btn {
   padding: 0.4rem 0.75rem;
   min-height: 44px;
   min-width: 44px;
-  background: rgba(56, 189, 248, 0.25);
-  border: 1px solid rgba(56, 189, 248, 0.4);
   border-radius: 0.5rem;
-  color: #38bdf8;
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
   -webkit-tap-highlight-color: transparent;
+  border: 1px solid;
+}
+
+.vehicle-card-edit-btn {
+  background: rgba(56, 189, 248, 0.25);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
 }
 
 .vehicle-card-edit-btn:hover {
   background: rgba(56, 189, 248, 0.35);
+}
+
+.vehicle-card-payment-btn {
+  background: rgba(34, 197, 94, 0.25);
+  border-color: rgba(34, 197, 94, 0.4);
+  color: #86efac;
+}
+
+.vehicle-card-payment-btn:hover {
+  background: rgba(34, 197, 94, 0.35);
+}
+
+.vehicle-card-payment {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.vehicle-card-payment .input {
+  width: 100%;
+}
+
+.vehicle-card-payment-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .vehicle-card-edit {
@@ -765,6 +819,67 @@
   color: #38bdf8;
   border-radius: 0.25rem;
 }
+
+.payment-badge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.payment-badge-cash {
+  background: rgba(34, 197, 94, 0.25);
+  color: #86efac;
+}
+
+.trip-item-payment-edit {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.trip-item-payment-edit .input {
+  min-width: 100px;
+}
+
+.trip-item-payment-edit .input-amount {
+  min-width: 90px;
+}
+
+.trip-item-payment-edit .payment-edit-for {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.trip-item-payment-edit .input-trips {
+  min-width: 110px;
+}
+
+.payment-summary {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(30, 41, 59, 0.8);
+  border-radius: 0.5rem;
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+
+.payment-summary-item {
+  margin: 0 0 0.35rem 0;
+}
+
+.payment-summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.payment-summary-cash strong {
+  color: #86efac;
+}
+
 
 .muted {
   color: #94a3b8;
