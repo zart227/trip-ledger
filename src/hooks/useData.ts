@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Trip } from '../types'
 import * as db from '../lib/db'
-import { syncWithSupabase, pullFromSupabase } from '../lib/sync'
+import { syncWithSupabase, pullFromSupabase, deleteFromSupabase } from '../lib/sync'
 import { isSupabaseConfigured } from '../lib/supabase'
 
 export function useData() {
@@ -120,9 +120,11 @@ export function useData() {
     await db.deleteTrip(tripId)
     setTrips((prev) => prev.filter((t) => t.id !== tripId))
     if (isSupabaseConfigured()) {
-      autoSync().catch((err) => console.error('Sync after deleteTrip failed:', err))
+      deleteFromSupabase([tripId]).catch((err) =>
+        console.error('Delete from Supabase failed:', err)
+      )
     }
-  }, [autoSync])
+  }, [])
 
   const sync = useCallback(async () => {
     const result = await syncWithSupabase(trips)
