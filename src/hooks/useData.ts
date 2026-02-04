@@ -15,16 +15,21 @@ export function useData() {
     setLoading(false)
   }, [])
 
-  useEffect(() => {
-    load()
-  }, [load])
-
   const autoSync = useCallback(async () => {
     if (!isSupabaseConfigured()) return
     const t = await db.getAllTrips()
     await syncWithSupabase(t)
     await load()
   }, [load])
+
+  useEffect(() => {
+    ;(async () => {
+      await load()
+      if (isSupabaseConfigured()) {
+        await autoSync()
+      }
+    })().catch((err) => console.error('Initial sync failed:', err))
+  }, [load, autoSync])
 
   const autoPull = useCallback(async () => {
     if (!isSupabaseConfigured()) return
@@ -52,6 +57,15 @@ export function useData() {
     return () => clearInterval(interval)
   }, [autoPull])
 
+  useEffect(() => {
+    if (!isSupabaseConfigured()) return
+    const onOnline = () => {
+      autoSync().catch((err) => console.error('Sync on online failed:', err))
+    }
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [autoSync])
+
   const recordEntry = useCallback(
     async (plateNumber: string, tonnage: number, groupName: string | null = null) => {
       const t: Trip = {
@@ -65,7 +79,9 @@ export function useData() {
       }
       await db.saveTrip(t)
       setTrips((prev) => [...prev, t])
-      if (isSupabaseConfigured()) autoSync().catch(() => {})
+      if (isSupabaseConfigured()) {
+        autoSync().catch((err) => console.error('Sync after entry failed:', err))
+      }
       return t
     },
     [autoSync]
@@ -77,13 +93,17 @@ export function useData() {
     const updated: Trip = { ...trip, exitTime: new Date().toISOString() }
     await db.saveTrip(updated)
     setTrips((prev) => prev.map((t) => (t.id === tripId ? updated : t)))
-    if (isSupabaseConfigured()) autoSync().catch(() => {})
+    if (isSupabaseConfigured()) {
+      autoSync().catch((err) => console.error('Sync after exit failed:', err))
+    }
   }, [trips, autoSync])
 
   const updateTrip = useCallback(async (trip: Trip) => {
     await db.saveTrip(trip)
     setTrips((prev) => prev.map((t) => (t.id === trip.id ? trip : t)))
-    if (isSupabaseConfigured()) autoSync().catch(() => {})
+    if (isSupabaseConfigured()) {
+      autoSync().catch((err) => console.error('Sync after updateTrip failed:', err))
+    }
   }, [autoSync])
 
   const updateTrips = useCallback(async (tripsToUpdate: Trip[]) => {
@@ -91,13 +111,17 @@ export function useData() {
     setTrips((prev) =>
       prev.map((t) => tripsToUpdate.find((u) => u.id === t.id) ?? t)
     )
-    if (isSupabaseConfigured()) autoSync().catch(() => {})
+    if (isSupabaseConfigured()) {
+      autoSync().catch((err) => console.error('Sync after updateTrips failed:', err))
+    }
   }, [autoSync])
 
   const deleteTrip = useCallback(async (tripId: string) => {
     await db.deleteTrip(tripId)
     setTrips((prev) => prev.filter((t) => t.id !== tripId))
-    if (isSupabaseConfigured()) autoSync().catch(() => {})
+    if (isSupabaseConfigured()) {
+      autoSync().catch((err) => console.error('Sync after deleteTrip failed:', err))
+    }
   }, [autoSync])
 
   const sync = useCallback(async () => {
