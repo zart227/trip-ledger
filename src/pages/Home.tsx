@@ -21,10 +21,13 @@ export function Home() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
+  const justAppliedSuggestionRef = useRef(false)
   const groupInputRef = useRef<HTMLInputElement>(null)
   const groupSuggestionsRef = useRef<HTMLDivElement>(null)
+  const justAppliedGroupSuggestionRef = useRef(false)
   const editGroupInputRef = useRef<HTMLInputElement>(null)
   const editGroupSuggestionsRef = useRef<HTMLDivElement>(null)
+  const justAppliedEditGroupSuggestionRef = useRef(false)
 
   const shiftDate = getCurrentShiftDate()
   const { start } = getShiftBounds(shiftDate)
@@ -138,18 +141,21 @@ export function Home() {
     setTonnage(String(allPlatesWithTonnage.get(p) ?? ''))
     setGroupName(allPlatesWithGroup.get(p) ?? '')
     setShowSuggestions(false)
+    justAppliedSuggestionRef.current = true
     inputRef.current?.focus()
   }
 
   const applyGroupSuggestion = (g: string) => {
     setGroupName(g)
     setShowGroupSuggestions(false)
+    justAppliedGroupSuggestionRef.current = true
     groupInputRef.current?.focus()
   }
 
   const applyEditGroupSuggestion = (g: string) => {
     setEditGroup(g)
     setShowEditGroupSuggestions(false)
+    justAppliedEditGroupSuggestionRef.current = true
     editGroupInputRef.current?.focus()
   }
 
@@ -329,7 +335,13 @@ export function Home() {
                 setPlate(e.target.value)
                 setShowSuggestions(true)
               }}
-              onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+              onFocus={() => {
+                if (justAppliedSuggestionRef.current) {
+                  justAppliedSuggestionRef.current = false
+                  return
+                }
+                suggestions.length > 0 && setShowSuggestions(true)
+              }}
               onKeyDown={handlePlateKeyDown}
               className="input"
               autoComplete="off"
@@ -369,7 +381,13 @@ export function Home() {
                 setGroupName(e.target.value)
                 setShowGroupSuggestions(true)
               }}
-              onFocus={() => groupSuggestions.length > 0 && setShowGroupSuggestions(true)}
+              onFocus={() => {
+                if (justAppliedGroupSuggestionRef.current) {
+                  justAppliedGroupSuggestionRef.current = false
+                  return
+                }
+                groupSuggestions.length > 0 && setShowGroupSuggestions(true)
+              }}
               onKeyDown={handleGroupKeyDown}
               className="input"
               autoComplete="off"
@@ -430,7 +448,13 @@ export function Home() {
                             setEditGroup(e.target.value)
                             setShowEditGroupSuggestions(true)
                           }}
-                          onFocus={() => editGroupSuggestions.length > 0 && setShowEditGroupSuggestions(true)}
+                          onFocus={() => {
+                          if (justAppliedEditGroupSuggestionRef.current) {
+                            justAppliedEditGroupSuggestionRef.current = false
+                            return
+                          }
+                          editGroupSuggestions.length > 0 && setShowEditGroupSuggestions(true)
+                        }}
                           onKeyDown={handleEditGroupKeyDown}
                           className="input"
                           placeholder="Группа (начните вводить для поиска)"
