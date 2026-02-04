@@ -4,6 +4,13 @@
 
 $ErrorActionPreference = "Stop"
 $sdkPath = "C:\Android\sdk"
+$projectRoot = Split-Path $PSScriptRoot -Parent
+
+# Proverka: zapusk iz korrektnoy papki proekta
+if (-not (Test-Path (Join-Path $projectRoot "package.json")) -or -not (Test-Path (Join-Path $projectRoot "android"))) {
+    Write-Host "Oshibka: zapustite iz papki proekta trip-ledger (gde est package.json i android)" -ForegroundColor Red
+    exit 1
+}
 
 # Poisk Java
 $javaHome = $null
@@ -56,7 +63,7 @@ $env:Path = "$javaHome\bin;$androidHome\platform-tools;$env:Path"
 $env:GRADLE_OPTS = "-Djavax.net.ssl.trustStoreType=WINDOWS-ROOT"
 
 # local.properties dlya Gradle
-$localProps = Join-Path $PSScriptRoot "..\android\local.properties"
+$localProps = Join-Path $projectRoot "android\local.properties"
 @"
 sdk.dir=$($androidHome -replace '\\', '/')
 "@ | Set-Content $localProps -Encoding UTF8
@@ -65,8 +72,15 @@ Write-Host "JAVA_HOME=$javaHome" -ForegroundColor Cyan
 Write-Host "ANDROID_HOME=$androidHome" -ForegroundColor Cyan
 
 # Sbornka
-$projectRoot = Split-Path $PSScriptRoot -Parent
 Set-Location $projectRoot
+
+# Udalenie oshibochnoy vlozhennoy papki trip-ledger (esli sozdana nevernym putem)
+$erroneousDir = Join-Path $projectRoot "trip-ledger"
+if (Test-Path $erroneousDir) {
+    Remove-Item $erroneousDir -Recurse -Force
+    Write-Host "Udalena oshibochnaya papka trip-ledger\" -ForegroundColor Yellow
+}
+
 npm run build:android
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 # assembleDebug - bez podpisi (release trebuet keystore)

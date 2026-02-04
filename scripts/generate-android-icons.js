@@ -4,7 +4,7 @@
  * Run: node scripts/generate-android-icons.js
  */
 import { Jimp } from 'jimp'
-import { mkdir } from 'fs/promises'
+import { mkdir, rm } from 'fs/promises'
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
@@ -36,6 +36,15 @@ function makeLightPixelsTransparent(img) {
 }
 
 async function main() {
+  // Remove erroneous nested folder (trip-ledger/trip-ledger) if created by wrong path
+  const erroneousDir = join(root, 'trip-ledger')
+  try {
+    await rm(erroneousDir, { recursive: true })
+    console.log('Removed erroneous trip-ledger/ folder')
+  } catch {
+    /* folder does not exist, ignore */
+  }
+
   const image = await Jimp.read(srcIcon)
   const resDir = join(root, 'android', 'app', 'src', 'main', 'res')
 

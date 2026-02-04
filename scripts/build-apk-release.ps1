@@ -6,6 +6,13 @@
 $ErrorActionPreference = "Stop"
 $sdkPath = "C:\Android\sdk"
 $projectRoot = Split-Path $PSScriptRoot -Parent
+
+# Proverka: zapusk iz korrektnoy papki proekta
+if (-not (Test-Path (Join-Path $projectRoot "package.json")) -or -not (Test-Path (Join-Path $projectRoot "android"))) {
+    Write-Host "Oshibka: zapustite iz papki proekta trip-ledger (gde est package.json i android)" -ForegroundColor Red
+    exit 1
+}
+
 $keystoreProps = Join-Path $projectRoot "android\keystore.properties"
 
 if (-not (Test-Path $keystoreProps)) {
@@ -55,6 +62,14 @@ sdk.dir=$($androidHome -replace '\\', '/')
 
 Write-Host "Sbornka release APK..." -ForegroundColor Cyan
 Set-Location $projectRoot
+
+# Udalenie oshibochnoy vlozhennoy papki trip-ledger (esli sozdana nevernym putem)
+$erroneousDir = Join-Path $projectRoot "trip-ledger"
+if (Test-Path $erroneousDir) {
+    Remove-Item $erroneousDir -Recurse -Force
+    Write-Host "Udalena oshibochnaya papka trip-ledger\" -ForegroundColor Yellow
+}
+
 npm run build:android
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
