@@ -822,6 +822,11 @@
 
 .stats-card {
   padding: 1rem;
+  color: #e2e8f0;
+}
+
+.stats-card .plate {
+  color: #f1f5f9;
 }
 
 .stats-header {
