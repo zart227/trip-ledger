@@ -583,28 +583,11 @@ export function Home() {
             )}
           </h3>
           <p className="muted small">Удалить рейс при ошибке</p>
-          {(() => {
-            const sorted = [...tripsThisShift].sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime())
-            const tripsByGroup = new Map<string, Trip[]>()
-            for (const t of sorted) {
-              const g = t.groupName || 'Без группы'
-              if (!tripsByGroup.has(g)) tripsByGroup.set(g, [])
-              tripsByGroup.get(g)!.push(t)
-            }
-            const tripGroupNames = [...tripsByGroup.keys()].sort((a, b) => {
-              if (a === 'Без группы') return 1
-              if (b === 'Без группы') return -1
-              return a.localeCompare(b)
-            })
-            return tripGroupNames.map((g) => (
-              <div key={g} className="trip-group">
-                <h4 className="group-title">{g}</h4>
-                <ul className="trip-list">
-                  {tripsByGroup.get(g)!.map((t) => renderTripItem(t, !t.exitTime))}
-                </ul>
-              </div>
-            ))
-          })()}
+          <ul className="trip-list">
+            {[...tripsThisShift]
+              .sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime())
+              .map((t) => renderTripItem(t, !t.exitTime))}
+          </ul>
         </section>
       )}
 
