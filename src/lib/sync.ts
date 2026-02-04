@@ -87,6 +87,12 @@ export async function syncWithSupabase(trips: Trip[]): Promise<{ ok: boolean; er
 
   const remote = pull.trips ?? []
   const localIds = new Set(trips.map((t) => t.id))
+
+  // If local is empty, treat as "new device" — pull only, never delete remote
+  if (trips.length === 0 && remote.length > 0) {
+    for (const t of remote) await db.saveTrip(t)
+    return { ok: true }
+  }
   const getCreated = (t: Trip) => t.createdAt
 
   const mergeTrips = (local: Trip[], rem: Trip[]): Trip[] => {
