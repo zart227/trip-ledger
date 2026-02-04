@@ -322,6 +322,35 @@ export function Home() {
         })} (смена 7:00–7:00)
       </p>
 
+      {activeTrips.length > 0 && (
+        <div className="card vehicles-on-territory-card">
+          <h3>Машины на территории</h3>
+          <p className="muted small">Клик — завершить рейс</p>
+          <div className="vehicles-on-territory-grid">
+            {[...activeTrips]
+              .sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime())
+              .map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  className="vehicle-on-territory-card"
+                  onClick={() => recordExit(t.id)}
+                >
+                  <span className="plate">{t.plateNumber}</span>
+                  <span className="muted">{t.tonnage} т</span>
+                  <span className="vehicle-on-territory-group">
+                    {t.groupName ? <span className="badge">{t.groupName}</span> : null}
+                  </span>
+                  <span className="muted entry-time">
+                    с {new Date(t.entryTime).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span className="vehicle-on-territory-action">Завершить →</span>
+                </button>
+              ))}
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleFormEntry} className="card form-card">
         <h3>Начать рейс</h3>
         <div className="form-row form-row-inputs">
