@@ -68,14 +68,16 @@ export function useData() {
 
   const recordEntry = useCallback(
     async (plateNumber: string, tonnage: number, groupName: string | null = null) => {
+      const now = new Date().toISOString()
       const t: Trip = {
         id: crypto.randomUUID(),
         plateNumber: plateNumber.trim(),
         tonnage: Number(tonnage) || 0,
         groupName: groupName?.trim() || null,
-        entryTime: new Date().toISOString(),
+        entryTime: now,
         exitTime: null,
-        createdAt: new Date().toISOString(),
+        createdAt: now,
+        updatedAt: now,
       }
       await db.saveTrip(t)
       setTrips((prev) => [...prev, t])
@@ -90,7 +92,8 @@ export function useData() {
   const recordExit = useCallback(async (tripId: string) => {
     const trip = trips.find((t) => t.id === tripId)
     if (!trip) return
-    const updated: Trip = { ...trip, exitTime: new Date().toISOString() }
+    const now = new Date().toISOString()
+    const updated: Trip = { ...trip, exitTime: now, updatedAt: now }
     await db.saveTrip(updated)
     setTrips((prev) => prev.map((t) => (t.id === tripId ? updated : t)))
     if (isSupabaseConfigured()) {
@@ -99,17 +102,20 @@ export function useData() {
   }, [trips, autoSync])
 
   const updateTrip = useCallback(async (trip: Trip) => {
-    await db.saveTrip(trip)
-    setTrips((prev) => prev.map((t) => (t.id === trip.id ? trip : t)))
+    const updated = { ...trip, updatedAt: new Date().toISOString() }
+    await db.saveTrip(updated)
+    setTrips((prev) => prev.map((t) => (t.id === trip.id ? updated : t)))
     if (isSupabaseConfigured()) {
       autoSync().catch((err) => console.error('Sync after updateTrip failed:', err))
     }
   }, [autoSync])
 
   const updateTrips = useCallback(async (tripsToUpdate: Trip[]) => {
-    for (const trip of tripsToUpdate) await db.saveTrip(trip)
+    const now = new Date().toISOString()
+    const updated = tripsToUpdate.map(t => ({ ...t, updatedAt: now }))
+    for (const trip of updated) await db.saveTrip(trip)
     setTrips((prev) =>
-      prev.map((t) => tripsToUpdate.find((u) => u.id === t.id) ?? t)
+      prev.map((t) => updated.find((u) => u.id === t.id) ?? t)
     )
     if (isSupabaseConfigured()) {
       autoSync().catch((err) => console.error('Sync after updateTrips failed:', err))

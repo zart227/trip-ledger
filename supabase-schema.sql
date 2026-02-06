@@ -11,13 +11,16 @@ CREATE TABLE IF NOT EXISTS trips (
   entry_time TIMESTAMPTZ NOT NULL,
   exit_time TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
   payment_method TEXT,
   amount NUMERIC
 );
 
--- Migration: add payment columns if table already exists (run in Supabase SQL Editor if needed)
+-- Migration: add payment and updated_at columns if table already exists (run in Supabase SQL Editor if needed)
 -- ALTER TABLE trips ADD COLUMN IF NOT EXISTS payment_method TEXT;
 -- ALTER TABLE trips ADD COLUMN IF NOT EXISTS amount NUMERIC;
+-- ALTER TABLE trips ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT now();
+-- UPDATE trips SET updated_at = created_at WHERE updated_at IS NULL;
 
 -- Indexes for queries
 CREATE INDEX IF NOT EXISTS idx_trips_entry_time ON trips(entry_time);

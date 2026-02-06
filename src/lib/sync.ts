@@ -11,6 +11,7 @@ function toDbTrip(t: Trip) {
     entry_time: t.entryTime,
     exit_time: t.exitTime,
     created_at: t.createdAt,
+    updated_at: t.updatedAt ?? t.createdAt,
     payment_method: t.cashAmount != null ? 'cash' : null,
     amount: t.cashAmount ?? null,
   }
@@ -24,6 +25,7 @@ function fromDbTrip(r: {
   entry_time: string
   exit_time: string | null
   created_at: string
+  updated_at?: string | null
   payment_method?: string | null
   amount?: number | null
 }): Trip {
@@ -35,6 +37,7 @@ function fromDbTrip(r: {
     entryTime: r.entry_time,
     exitTime: r.exit_time,
     createdAt: r.created_at,
+    updatedAt: r.updated_at ?? r.created_at,
     cashAmount: typeof r.amount === 'number' && r.payment_method === 'cash' ? r.amount : undefined,
   }
 }
@@ -98,16 +101,14 @@ export async function syncWithSupabase(trips: Trip[]): Promise<{ ok: boolean; er
     return { ok: true }
   }
 
-  const getCreated = (t: Trip) => t.createdAt
+  const getUpdated = (t: Trip) => t.updatedAt ?? t.createdAt
   const mergeTrips = (local: Trip[], rem: Trip[]): Trip[] => {
     const map = new Map<string, Trip>()
     for (const t of [...local, ...rem]) {
       const existing = map.get(t.id)
       if (!existing) {
         map.set(t.id, t)
-      } else if (t.exitTime && !existing.exitTime) {
-        map.set(t.id, t)
-      } else if (getCreated(t) > getCreated(existing)) {
+      } else if (getUpdated(t) > getUpdated(existing)) {
         map.set(t.id, t)
       }
     }

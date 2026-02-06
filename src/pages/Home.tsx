@@ -251,7 +251,7 @@ export function Home() {
     const newPlate = editPlate.trim()
     const newTonnage = Number(editTonnage) || 0
     const newGroup = editGroup.trim() || null
-    const toUpdate = trips
+    const toUpdate = tripsThisShift
       .filter((x) => x.plateNumber === editingPlate)
       .map((trip) => ({
         ...trip,
