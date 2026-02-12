@@ -2,6 +2,36 @@ import { supabase, isSupabaseConfigured } from './supabase'
 import type { Trip } from '../types'
 import * as db from './db'
 
+const MAX_RETRIES = 3
+const RETRY_DELAY_MS = 1500
+
+function isRetryableNetworkError(e: unknown): boolean {
+  const msg = String(e)
+  return (
+    msg.includes('Failed to fetch') ||
+    msg.includes('ERR_HTTP2') ||
+    msg.includes('NetworkError') ||
+    msg.includes('Load failed')
+  )
+}
+
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      return await fn()
+    } catch (e) {
+      lastError = e
+      if (attempt < MAX_RETRIES - 1 && isRetryableNetworkError(e)) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAY_MS))
+        continue
+      }
+      throw e
+    }
+  }
+  throw lastError
+}
+
 function toDbTrip(t: Trip) {
   return {
     id: t.id,
@@ -48,7 +78,10 @@ export async function pushToSupabase(trips: Trip[]): Promise<{ ok: boolean; erro
   }
 
   try {
-    await supabase.from('trips').upsert(trips.map(toDbTrip), { onConflict: 'id' })
+    await withRetry(async () => {
+      const r = await supabase.from('trips').upsert(trips.map(toDbTrip), { onConflict: 'id' })
+      if (r.error) throw r.error
+    })
     return { ok: true }
   } catch (e) {
     console.error('[sync] ❌ pushToSupabase() failed:', e)
@@ -66,7 +99,7 @@ export async function pullFromSupabase(): Promise<{
   }
 
   try {
-    const { data, error } = await supabase.from('trips').select('*')
+    const { data, error } = await withRetry(() => supabase.from('trips').select('*'))
     if (error) throw error
     const trips = (data ?? []).map(fromDbTrip)
     return { ok: true, trips }
@@ -81,7 +114,7 @@ export async function deleteFromSupabase(ids: string[]): Promise<{ ok: boolean; 
     return { ok: true }
   }
   try {
-    const { error } = await supabase.from('trips').delete().in('id', ids)
+    const { error } = await withRetry(() => supabase.from('trips').delete().in('id', ids))
     if (error) throw error
     return { ok: true }
   } catch (e) {
@@ -118,10 +151,15 @@ export async function pullAndMergeWithLocal(localTrips: Trip[]): Promise<{
   return { ok: true, trips: merged }
 }
 
-export async function syncWithSupabase(trips: Trip[]): Promise<{ ok: boolean; error?: string }> {
+export async function syncWithSupabase(trips: Trip[]): Promise<{
+  ok: boolean
+  error?: string
+  trips?: Trip[]
+}> {
   const pull = await pullFromSupabase()
   if (!pull.ok) {
-    return pushToSupabase(trips)
+    const pushResult = await pushToSupabase(trips)
+    return pushResult.ok ? { ok: true, trips } : pushResult
   }
 
   const remote = pull.trips ?? []
@@ -129,13 +167,16 @@ export async function syncWithSupabase(trips: Trip[]): Promise<{ ok: boolean; er
   // If local is empty, treat as "new device" — pull only, never touch remote
   if (trips.length === 0 && remote.length > 0) {
     for (const t of remote) await db.saveTrip(t)
-    return { ok: true }
+    return { ok: true, trips: remote }
   }
 
   const merged = mergeTrips(trips, remote)
   const pushResult = await pushToSupabase(merged)
   if (!pushResult.ok) return pushResult
 
-  for (const t of merged) await db.saveTrip(t)
-  return { ok: true }
+  // Re-read IDB: user may have added/updated trips while we were syncing — don't overwrite them
+  const localNow = await db.getAllTrips()
+  const final = mergeTrips(merged, localNow)
+  for (const t of final) await db.saveTrip(t)
+  return { ok: true, trips: final }
 }
