@@ -240,7 +240,7 @@ export function Home() {
 
   const startEditByPlate = (plate: string) => {
     setEditingPlate(plate)
-    setEditPlate(plate)
+    setEditPlate(plate.toUpperCase())
     setEditTonnage(String(plateToTonnage.get(plate) ?? 0))
     setEditGroup(plateToGroup.get(plate) ?? '')
     setShowEditGroupSuggestions(false)
@@ -417,7 +417,7 @@ export function Home() {
               placeholder="Госномер (начните вводить для поиска)"
               value={plate}
               onChange={(e) => {
-                setPlate(e.target.value)
+                setPlate(e.target.value.toUpperCase())
                 setShowSuggestions(true)
               }}
               onFocus={() => {
@@ -569,7 +569,7 @@ export function Home() {
                     <div key={p} className="vehicle-card vehicle-card-edit">
                       <input
                         value={editPlate}
-                        onChange={(e) => setEditPlate(e.target.value)}
+                        onChange={(e) => setEditPlate(e.target.value.toUpperCase())}
                         className="input"
                         placeholder="Госномер"
                       />

@@ -78,7 +78,7 @@ export function Stats() {
           type="text"
           placeholder="Поиск по номеру..."
           value={filter}
-          onChange={(e) => setFilter(e.target.value)}
+          onChange={(e) => setFilter(e.target.value.toUpperCase())}
           className="input"
         />
       </div>

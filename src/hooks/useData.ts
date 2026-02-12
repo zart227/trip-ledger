@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Trip } from '../types'
 import * as db from '../lib/db'
-import { syncWithSupabase, pullFromSupabase, deleteFromSupabase } from '../lib/sync'
+import { syncWithSupabase, pullAndMergeWithLocal, deleteFromSupabase } from '../lib/sync'
 import { isSupabaseConfigured } from '../lib/supabase'
 
 export function useData() {
@@ -25,27 +25,24 @@ export function useData() {
   useEffect(() => {
     ;(async () => {
       await load()
-      if (isSupabaseConfigured()) {
-        await autoSync()
-      }
+      if (isSupabaseConfigured()) await autoSync()
     })().catch((err) => console.error('Initial sync failed:', err))
   }, [load, autoSync])
 
   const autoPull = useCallback(async () => {
     if (!isSupabaseConfigured()) return
-    const result = await pullFromSupabase()
+    const local = await db.getAllTrips()
+    const result = await pullAndMergeWithLocal(local)
     if (result.ok && result.trips) {
       await db.replaceAllTrips(result.trips)
-      await load()
+      setTrips(result.trips)
     }
-  }, [load])
+  }, [])
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        autoPull()
-      }
+      if (document.visibilityState === 'visible') autoPull()
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => document.removeEventListener('visibilitychange', onVisibilityChange)
@@ -59,9 +56,7 @@ export function useData() {
 
   useEffect(() => {
     if (!isSupabaseConfigured()) return
-    const onOnline = () => {
-      autoSync().catch((err) => console.error('Sync on online failed:', err))
-    }
+    const onOnline = () => autoSync().catch((err) => console.error('Sync on online failed:', err))
     window.addEventListener('online', onOnline)
     return () => window.removeEventListener('online', onOnline)
   }, [autoSync])
@@ -81,9 +76,7 @@ export function useData() {
       }
       await db.saveTrip(t)
       setTrips((prev) => [...prev, t])
-      if (isSupabaseConfigured()) {
-        autoSync().catch((err) => console.error('Sync after entry failed:', err))
-      }
+      if (isSupabaseConfigured()) autoSync().catch((err) => console.error('Sync after entry failed:', err))
       return t
     },
     [autoSync]
@@ -96,18 +89,14 @@ export function useData() {
     const updated: Trip = { ...trip, exitTime: now, updatedAt: now }
     await db.saveTrip(updated)
     setTrips((prev) => prev.map((t) => (t.id === tripId ? updated : t)))
-    if (isSupabaseConfigured()) {
-      autoSync().catch((err) => console.error('Sync after exit failed:', err))
-    }
+    if (isSupabaseConfigured()) autoSync().catch((err) => console.error('Sync after exit failed:', err))
   }, [trips, autoSync])
 
   const updateTrip = useCallback(async (trip: Trip) => {
     const updated = { ...trip, updatedAt: new Date().toISOString() }
     await db.saveTrip(updated)
     setTrips((prev) => prev.map((t) => (t.id === trip.id ? updated : t)))
-    if (isSupabaseConfigured()) {
-      autoSync().catch((err) => console.error('Sync after updateTrip failed:', err))
-    }
+    if (isSupabaseConfigured()) autoSync().catch((err) => console.error('Sync after updateTrip failed:', err))
   }, [autoSync])
 
   const updateTrips = useCallback(async (tripsToUpdate: Trip[]) => {
@@ -117,9 +106,7 @@ export function useData() {
     setTrips((prev) =>
       prev.map((t) => updated.find((u) => u.id === t.id) ?? t)
     )
-    if (isSupabaseConfigured()) {
-      autoSync().catch((err) => console.error('Sync after updateTrips failed:', err))
-    }
+    if (isSupabaseConfigured()) autoSync().catch((err) => console.error('Sync after updateTrips failed:', err))
   }, [autoSync])
 
   const deleteTrip = useCallback(async (tripId: string) => {
@@ -139,13 +126,14 @@ export function useData() {
   }, [trips, load])
 
   const pull = useCallback(async () => {
-    const result = await pullFromSupabase()
+    const local = await db.getAllTrips()
+    const result = await pullAndMergeWithLocal(local)
     if (result.ok && result.trips) {
       await db.replaceAllTrips(result.trips)
-      await load()
+      setTrips(result.trips)
     }
     return result
-  }, [load])
+  }, [])
 
   return {
     trips,

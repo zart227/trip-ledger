@@ -51,6 +51,7 @@ export async function pushToSupabase(trips: Trip[]): Promise<{ ok: boolean; erro
     await supabase.from('trips').upsert(trips.map(toDbTrip), { onConflict: 'id' })
     return { ok: true }
   } catch (e) {
+    console.error('[sync] ❌ pushToSupabase() failed:', e)
     return { ok: false, error: String(e) }
   }
 }
@@ -70,6 +71,7 @@ export async function pullFromSupabase(): Promise<{
     const trips = (data ?? []).map(fromDbTrip)
     return { ok: true, trips }
   } catch (e) {
+    console.error('[sync] ❌ pullFromSupabase() failed:', e)
     return { ok: false, error: String(e) }
   }
 }
@@ -83,8 +85,37 @@ export async function deleteFromSupabase(ids: string[]): Promise<{ ok: boolean; 
     if (error) throw error
     return { ok: true }
   } catch (e) {
+    console.error('[sync] ❌ deleteFromSupabase() failed:', e)
     return { ok: false, error: String(e) }
   }
+}
+
+const getUpdated = (t: Trip) => t.updatedAt ?? t.createdAt
+
+function mergeTrips(local: Trip[], rem: Trip[]): Trip[] {
+  const map = new Map<string, Trip>()
+  for (const t of [...local, ...rem]) {
+    const existing = map.get(t.id)
+    if (!existing) {
+      map.set(t.id, t)
+    } else if (getUpdated(t) > getUpdated(existing)) {
+      map.set(t.id, t)
+    }
+  }
+  return Array.from(map.values())
+}
+
+/** Pull from Supabase and merge with local trips. Does not push or write. Used by autoPull to avoid overwriting local-only changes. */
+export async function pullAndMergeWithLocal(localTrips: Trip[]): Promise<{
+  ok: boolean
+  trips?: Trip[]
+  error?: string
+}> {
+  const pull = await pullFromSupabase()
+  if (!pull.ok) return pull
+  const remote = pull.trips ?? []
+  const merged = mergeTrips(localTrips, remote)
+  return { ok: true, trips: merged }
 }
 
 export async function syncWithSupabase(trips: Trip[]): Promise<{ ok: boolean; error?: string }> {
@@ -99,20 +130,6 @@ export async function syncWithSupabase(trips: Trip[]): Promise<{ ok: boolean; er
   if (trips.length === 0 && remote.length > 0) {
     for (const t of remote) await db.saveTrip(t)
     return { ok: true }
-  }
-
-  const getUpdated = (t: Trip) => t.updatedAt ?? t.createdAt
-  const mergeTrips = (local: Trip[], rem: Trip[]): Trip[] => {
-    const map = new Map<string, Trip>()
-    for (const t of [...local, ...rem]) {
-      const existing = map.get(t.id)
-      if (!existing) {
-        map.set(t.id, t)
-      } else if (getUpdated(t) > getUpdated(existing)) {
-        map.set(t.id, t)
-      }
-    }
-    return Array.from(map.values())
   }
 
   const merged = mergeTrips(trips, remote)
