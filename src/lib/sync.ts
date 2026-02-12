@@ -76,10 +76,11 @@ export async function pushToSupabase(trips: Trip[]): Promise<{ ok: boolean; erro
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: 'Supabase не настроен' }
   }
+  const client = supabase
 
   try {
     await withRetry(async () => {
-      const r = await supabase.from('trips').upsert(trips.map(toDbTrip), { onConflict: 'id' })
+      const r = await client.from('trips').upsert(trips.map(toDbTrip), { onConflict: 'id' })
       if (r.error) throw r.error
     })
     return { ok: true }
@@ -97,9 +98,13 @@ export async function pullFromSupabase(): Promise<{
   if (!isSupabaseConfigured() || !supabase) {
     return { ok: false, error: 'Supabase не настроен' }
   }
+  const client = supabase
 
   try {
-    const { data, error } = await withRetry(() => supabase.from('trips').select('*'))
+    const { data, error } = await withRetry(async () => {
+      const r = await client.from('trips').select('*')
+      return r
+    })
     if (error) throw error
     const trips = (data ?? []).map(fromDbTrip)
     return { ok: true, trips }
@@ -113,8 +118,12 @@ export async function deleteFromSupabase(ids: string[]): Promise<{ ok: boolean; 
   if (!isSupabaseConfigured() || !supabase || ids.length === 0) {
     return { ok: true }
   }
+  const client = supabase
   try {
-    const { error } = await withRetry(() => supabase.from('trips').delete().in('id', ids))
+    const { error } = await withRetry(async () => {
+      const r = await client.from('trips').delete().in('id', ids)
+      return r
+    })
     if (error) throw error
     return { ok: true }
   } catch (e) {
