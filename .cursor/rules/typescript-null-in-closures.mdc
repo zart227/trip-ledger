@@ -1,0 +1,38 @@
+---
+description: Избегать TS18047 — сужение типа не сохраняется в замыканиях
+globs: **/*.ts
+alwaysApply: false
+---
+
+# TypeScript: null в замыканиях (TS18047)
+
+После проверки на `null`/`undefined` TypeScript сужает тип только в текущей области. **В замыканиях** (возвращаемая функция, callback, setTimeout и т.д.) сужение не сохраняется — переменная снова считается возможно `null`.
+
+## Правило
+
+Если в возвращаемой функции или колбэке используется переменная, которую вы ранее проверили на null, **присвойте её локальной переменной после проверки** и в замыкании используйте уже эту переменную.
+
+## Пример
+
+```typescript
+// ❌ BAD — в замыкании supabase снова считается возможно null → TS18047
+export function subscribe(callbacks: Callbacks): () => void {
+  if (!supabase) return () => {}
+  const channel = supabase.channel('x').subscribe()
+  return () => {
+    supabase.removeChannel(channel)  // error: 'supabase' is possibly 'null'
+  }
+}
+
+// ✅ GOOD — локальная переменная сохраняет суженный тип в замыкании
+export function subscribe(callbacks: Callbacks): () => void {
+  if (!supabase) return () => {}
+  const client = supabase
+  const channel = client.channel('x').subscribe()
+  return () => {
+    client.removeChannel(channel)
+  }
+}
+```
+
+Аналогично для любых `x | null`: после `if (!x) return` использовать в замыканиях не `x`, а `const y = x` и далее `y`.

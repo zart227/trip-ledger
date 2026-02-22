@@ -202,7 +202,8 @@ export type TripsRealtimeCallbacks = {
 export function subscribeToTripsRealtime(callbacks: TripsRealtimeCallbacks): () => void {
   if (!isSupabaseConfigured() || !supabase) return () => {}
 
-  const channel = supabase
+  const client = supabase
+  const channel = client
     .channel('trips-realtime')
     .on(
       'postgres_changes',
@@ -231,6 +232,6 @@ export function subscribeToTripsRealtime(callbacks: TripsRealtimeCallbacks): () 
     .subscribe()
 
   return () => {
-    supabase.removeChannel(channel)
+    client.removeChannel(channel)
   }
 }
