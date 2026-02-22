@@ -85,7 +85,7 @@ export function Stats() {
 
       <div className="stats-grid">
         {filtered.map((p) => (
-          <PlateStats key={p} plate={p} trips={trips} />
+          <PlateStats key={p} plate={p} trips={tripsThisShift} />
         ))}
       </div>
 
