@@ -37,7 +37,17 @@ export function Home() {
   const { start } = getShiftBounds(shiftDate)
   const tripsThisShift = trips.filter((t) => new Date(t.entryTime) >= start)
   const recentPlates = [...new Set(tripsThisShift.map((t) => t.plateNumber))]
-  const plateToTonnage = new Map(tripsThisShift.map((t) => [t.plateNumber, t.tonnage]))
+  const shiftSortedNewestFirst = [...tripsThisShift].sort(
+    (a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime()
+  )
+  const plateToTonnage = new Map<string, number>()
+  const plateToGroup = new Map<string, string>()
+  const plateToTripCount = new Map<string, number>()
+  for (const t of shiftSortedNewestFirst) {
+    plateToTripCount.set(t.plateNumber, (plateToTripCount.get(t.plateNumber) ?? 0) + 1)
+    if (!plateToTonnage.has(t.plateNumber)) plateToTonnage.set(t.plateNumber, t.tonnage)
+    if (!plateToGroup.has(t.plateNumber)) plateToGroup.set(t.plateNumber, t.groupName ?? '')
+  }
   const allPlatesWithTonnage = new Map<string, number>()
   const allPlatesWithGroup = new Map<string, string>()
   for (const t of [...trips].reverse()) {
@@ -46,14 +56,6 @@ export function Home() {
     }
     if (!allPlatesWithGroup.has(t.plateNumber)) {
       allPlatesWithGroup.set(t.plateNumber, t.groupName ?? '')
-    }
-  }
-  const plateToTripCount = new Map<string, number>()
-  const plateToGroup = new Map<string, string>()
-  for (const t of [...tripsThisShift].sort((a, b) => new Date(b.entryTime).getTime() - new Date(a.entryTime).getTime())) {
-    plateToTripCount.set(t.plateNumber, (plateToTripCount.get(t.plateNumber) ?? 0) + 1)
-    if (!plateToGroup.has(t.plateNumber)) {
-      plateToGroup.set(t.plateNumber, t.groupName ?? '')
     }
   }
   const totalTripsThisShift = tripsThisShift.length
@@ -74,9 +76,14 @@ export function Home() {
 
   const plateSearch = plate.trim().toUpperCase()
   const suggestions = plateSearch.length >= 1
-    ? [...allPlatesWithTonnage.keys()].filter((p) =>
-        p.toUpperCase().includes(plateSearch)
-      ).slice(0, 8)
+    ? [...allPlatesWithTonnage.keys()]
+        .filter((p) => p.toUpperCase().includes(plateSearch))
+        .sort((a, b) => {
+          const aInShift = recentPlates.includes(a) ? 1 : 0
+          const bInShift = recentPlates.includes(b) ? 1 : 0
+          return bInShift - aInShift
+        })
+        .slice(0, 8)
     : []
 
   const groupSearch = groupName.trim()
@@ -142,8 +149,11 @@ export function Home() {
 
   const applySuggestion = (p: string) => {
     setPlate(p)
-    setTonnage(String(allPlatesWithTonnage.get(p) ?? ''))
-    setGroupName(allPlatesWithGroup.get(p) ?? '')
+    const fromShift = recentPlates.includes(p)
+    const tonnageVal = fromShift ? plateToTonnage.get(p) : undefined
+    const groupVal = fromShift ? plateToGroup.get(p) : undefined
+    setTonnage(String(tonnageVal ?? allPlatesWithTonnage.get(p) ?? ''))
+    setGroupName(groupVal ?? allPlatesWithGroup.get(p) ?? '')
     setShowSuggestions(false)
     justAppliedSuggestionRef.current = true
     inputRef.current?.focus()
