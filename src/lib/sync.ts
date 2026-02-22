@@ -47,7 +47,7 @@ function toDbTrip(t: Trip) {
   }
 }
 
-function fromDbTrip(r: {
+export type DbTripRow = {
   id: string
   plate_number: string
   tonnage: number
@@ -58,7 +58,9 @@ function fromDbTrip(r: {
   updated_at?: string | null
   payment_method?: string | null
   amount?: number | null
-}): Trip {
+}
+
+function fromDbTrip(r: DbTripRow): Trip {
   return {
     id: r.id,
     plateNumber: r.plate_number,
@@ -188,4 +190,47 @@ export async function syncWithSupabase(trips: Trip[]): Promise<{
   const final = mergeTrips(merged, localNow)
   for (const t of final) await db.saveTrip(t)
   return { ok: true, trips: final }
+}
+
+export type TripsRealtimeCallbacks = {
+  onInsert: (trip: Trip) => void
+  onUpdate: (trip: Trip) => void
+  onDelete: (id: string) => void
+}
+
+/** Подписка на изменения таблицы trips через Supabase Realtime. Обновления приходят по дельтам, без полной перезагрузки списка. */
+export function subscribeToTripsRealtime(callbacks: TripsRealtimeCallbacks): () => void {
+  if (!isSupabaseConfigured() || !supabase) return () => {}
+
+  const channel = supabase
+    .channel('trips-realtime')
+    .on(
+      'postgres_changes',
+      { event: 'INSERT', schema: 'public', table: 'trips' },
+      (payload) => {
+        const row = payload.new as DbTripRow
+        if (row?.id) callbacks.onInsert(fromDbTrip(row))
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: 'UPDATE', schema: 'public', table: 'trips' },
+      (payload) => {
+        const row = payload.new as DbTripRow
+        if (row?.id) callbacks.onUpdate(fromDbTrip(row))
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: 'DELETE', schema: 'public', table: 'trips' },
+      (payload) => {
+        const row = payload.old as { id?: string }
+        if (row?.id) callbacks.onDelete(row.id)
+      }
+    )
+    .subscribe()
+
+  return () => {
+    supabase.removeChannel(channel)
+  }
 }
