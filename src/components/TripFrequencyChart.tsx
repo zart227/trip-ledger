@@ -62,7 +62,21 @@ export function TripFrequencyChart({ trips, shiftStart }: TripFrequencyChartProp
           >
             <XAxis
               dataKey="label"
-              tick={{ fill: '#94a3b8', fontSize: 10, angle: -45, textAnchor: 'end' }}
+              tick={(props: { x?: number; y?: number; payload?: { value?: string; label?: string } }) => {
+                const label = props.payload?.value ?? props.payload?.label ?? ''
+                return (
+                  <text
+                    x={props.x}
+                    y={props.y}
+                    fill="#94a3b8"
+                    fontSize={10}
+                    textAnchor="end"
+                    transform={`rotate(-45 ${props.x ?? 0} ${props.y ?? 0})`}
+                  >
+                    {label}
+                  </text>
+                )
+              }}
               tickLine={{ stroke: 'rgba(148,163,184,0.3)' }}
               axisLine={{ stroke: 'rgba(148,163,184,0.2)' }}
               interval={0}
@@ -81,7 +95,7 @@ export function TripFrequencyChart({ trips, shiftStart }: TripFrequencyChartProp
                 borderRadius: '8px',
                 color: '#e2e8f0',
               }}
-              labelFormatter={(_, payload) =>
+              labelFormatter={(_: unknown, payload?: Array<{ payload?: { label?: string } }>) =>
                 payload?.[0]?.payload?.label ?? ''
               }
               formatter={(value: number) => [`${value} рейсов`, 'Въездов']}
