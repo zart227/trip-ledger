@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useData } from '../hooks/useData'
 import type { Trip } from '../types'
 import { getShiftBounds, getCurrentShiftDate } from '../lib/export'
+import { TripFrequencyChart, UniqueMachinesCard } from '../components/TripFrequencyChart'
 
 function PlateStats({ plate, trips }: { plate: string; trips: Trip[] }) {
   const plateTrips = trips.filter((t) => t.plateNumber === plate)
@@ -51,9 +52,9 @@ export function Stats() {
   const { trips } = useData()
   const [filter, setFilter] = useState('')
   const shiftDate = getCurrentShiftDate()
-  const { start } = getShiftBounds(shiftDate)
+  const { start: shiftStart } = getShiftBounds(shiftDate)
 
-  const tripsThisShift = trips.filter((t) => new Date(t.entryTime) >= start)
+  const tripsThisShift = trips.filter((t) => new Date(t.entryTime) >= shiftStart)
   const platesShift = [...new Set(tripsThisShift.map((t) => t.plateNumber))]
   const platesAll = [...new Set(trips.map((t) => t.plateNumber))]
   const plates = filter ? platesAll : platesShift
@@ -82,6 +83,9 @@ export function Stats() {
           className="input"
         />
       </div>
+
+      <UniqueMachinesCard trips={trips} />
+      <TripFrequencyChart trips={tripsThisShift} shiftStart={shiftStart} />
 
       <div className="stats-grid">
         {filtered.map((p) => (
