@@ -58,11 +58,11 @@ export function TripFrequencyChart({ trips, shiftStart }: TripFrequencyChartProp
         <ResponsiveContainer width="100%" height={220}>
           <BarChart
             data={chartData}
-            margin={{ top: 8, right: 8, left: 0, bottom: 4 }}
+            margin={{ top: 8, right: 8, left: 0, bottom: 32 }}
           >
             <XAxis
               dataKey="label"
-              tick={{ fill: '#94a3b8', fontSize: 10 }}
+              tick={{ fill: '#94a3b8', fontSize: 10, angle: -45, textAnchor: 'end' }}
               tickLine={{ stroke: 'rgba(148,163,184,0.3)' }}
               axisLine={{ stroke: 'rgba(148,163,184,0.2)' }}
               interval={0}
