@@ -96,8 +96,9 @@ export function formatShiftReport(trips: Trip[], shiftDate: Date): string {
 
   for (const group of sortedGroups) {
     lines.push('')
-    lines.push(`${group}:`)
     const plateCounts = platesByGroup.get(group)!
+    const groupTotalTrips = [...plateCounts.values()].reduce((s, { count }) => s + count, 0)
+    lines.push(`${group} (${groupTotalTrips} ${pluralize(groupTotalTrips, ['рейс', 'рейса', 'рейсов'])}):`)
     const sortedPlates = [...plateCounts.entries()].sort((a, b) =>
       a[0].localeCompare(b[0])
     )
